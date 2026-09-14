@@ -1,0 +1,12 @@
+@ClimaApi_HostAddress = http://localhost:5033
+
+GET {{ClimaApi_HostAddress}}/
+Accept: application/json
+
+###
+
+GET {{ClimaApi_HostAddress}}/api/clima/recomendacion/Bogota
+Accept: application/json
+
+###
+
