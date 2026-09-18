@@ -8,5 +8,8 @@ Accept: application/json
 GET {{ClimaApi_HostAddress}}/api/clima/recomendacion/Bogota
 Accept: application/json
 
+GET {{ClimaApi_HostAddress}}/health
+Accept: application/json
+
 ###
 
