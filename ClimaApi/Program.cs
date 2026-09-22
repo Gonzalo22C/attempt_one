@@ -1,9 +1,12 @@
 using System.Diagnostics;
+using ClimaApi.DTOs;
+using ClimaApi.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddOpenApi();
+builder.Services.AddScoped<IClimaService, ClimaService>();
 
 var app = builder.Build();
 
@@ -27,7 +30,7 @@ if (app.Environment.IsDevelopment())
 // Endpoint 1: '/'
 app.MapGet("/", () => Results.Ok(new
 {
-    mensaje = "Bienvenido a la API de Clima",
+    mensaje = "API de Clima v1.1 - Refactorizada con DTOs y Servicios",
     estado = "Activo",
     endpoints = new[]
     {
@@ -54,30 +57,10 @@ app.MapGet("/health", () =>
 .WithName("HealthCheck");
 
 // Endpoint 3: '/api/clima/recomendacion/{ciudad}'
-app.MapGet("/api/clima/recomendacion/{ciudad}", (string ciudad) =>
+app.MapGet("/api/clima/recomendacion/{ciudad}", (string ciudad, IClimaService climaService) =>
 {
-    var condiciones = new[] { "Soleado", "Lluvioso", "Nublado", "Frío", "Tormentoso" };
-    var condicion = condiciones[Random.Shared.Next(condiciones.Length)];
-    var temperatura = Random.Shared.Next(5, 35);
-
-    var recomendacion = condicion switch
-    {
-        "Soleado" => "Día soleado: usa protector solar, gafas de sol y mantente hidratado.",
-        "Lluvioso" => "Día lluvioso: lleva paraguas o impermeable y calzado adecuado.",
-        "Nublado" => "Cielo cubierto: buen clima para actividades al aire libre con abrigo ligero.",
-        "Frío" => "Temperaturas bajas: viste ropa abrigada y consume bebidas calientes.",
-        "Tormentoso" => "Alerta de tormenta: mantente resguardado y evita traslados innecesarios.",
-        _ => "Disfruta de tu día."
-    };
-
-    return Results.Ok(new
-    {
-        ciudad,
-        temperatura = $"{temperatura}°C",
-        condicion,
-        recomendacion,
-        fecha = DateTime.UtcNow
-    });
+    var resultado = climaService.ObtenerRecomendacionClima(ciudad);
+    return Results.Ok(resultado);
 })
 .WithName("ObtenerRecomendacionClima");
 
