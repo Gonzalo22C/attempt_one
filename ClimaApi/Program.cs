@@ -5,12 +5,43 @@ using ClimaApi.Services;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-builder.Services.AddOpenApi();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
 builder.Services.AddScoped<IClimaService, ClimaService>();
 
 var app = builder.Build();
 
 var appStartTime = DateTime.UtcNow;
+
+// Middleware global para captura y manejo de excepciones no controladas
+app.Use(async (context, next) =>
+{
+    try
+    {
+        await next(context);
+    }
+    catch (Exception ex)
+    {
+        app.Logger.LogError(ex, "Error no controlado capturado por el middleware global: {Message}", ex.Message);
+
+        if (!context.Response.HasStarted)
+        {
+            context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+            context.Response.ContentType = "application/json";
+
+            var errorResponse = new
+            {
+                estado = StatusCodes.Status500InternalServerError,
+                error = "Error interno del servidor",
+                mensaje = "Ocurrió un error inesperado al procesar la solicitud.",
+                detalle = ex.Message,
+                fecha = DateTime.UtcNow
+            };
+
+            await context.Response.WriteAsJsonAsync(errorResponse);
+        }
+    }
+});
 
 // Middleware personalizado para registrar método HTTP, ruta y tiempo de ejecución
 app.Use(async (context, next) =>
@@ -24,7 +55,8 @@ app.Use(async (context, next) =>
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
-    app.MapOpenApi();
+    app.UseSwagger();
+    app.UseSwaggerUI();
 }
 
 // Endpoint 1: '/'
@@ -36,7 +68,8 @@ app.MapGet("/", () => Results.Ok(new
     {
         "/",
         "/health",
-        "/api/clima/recomendacion/{ciudad}"
+        "/api/clima/recomendacion/{ciudad}",
+        "/swagger"
     }
 }));
 
